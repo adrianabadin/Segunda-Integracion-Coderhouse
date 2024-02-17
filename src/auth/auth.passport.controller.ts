@@ -1,20 +1,20 @@
 import { Request } from "express"
-import {PassportAuthService} from "./auth.pasport.service"
+import { PassportService} from "./auth.pasport.service"
 import * as argon from "argon2"
 import { DoneCallback } from "passport"
 import passport from 'passport';
 import { zodCreateUserType } from "./auth.schemas";
 import { CartService } from "../carts/cart.service";
-const passportAuthService= new PassportAuthService()
+const passportService = new PassportService()
+const cartService= new CartService()
 export class PassportController {
     constructor (
-        protected passportService= passportAuthService,protected cartService = new CartService()
-    ){}
+        protected passportServicedb= passportService    ){}
     async localLogin(req:Request,email:string,password:string,done:(error:any,data:any,...args:any)=>any){
 try{
-        const data = await passportAuthService.findByUserName(email)
-        if (data.ok){
-            const response = data.data
+        const data = await passportService.findByEmail(email)
+        if (data !==undefined){
+            const response = data
             if (response !== null&& typeof response ==="object" && "password" in response){
                 if (await argon.verify(response.password,password)){
                     return done(null,response)
@@ -28,22 +28,25 @@ try{
     }
     async localSignUp(req:Request<any,any,zodCreateUserType["body"]>,email:string,password:string,done:(error:any,data:any,...args:any)=>any){
         try{
-            const data =await this.passportService.findByUserName(email)
+            const data =await passportService.findByEmail(email)
             // si el usuario fue encontrado entonces retorna user exist error
-            if (data.ok){
+            if (data !== null){
+                console.log(data)
                     return done(new Error("User Alrready exists"),null)
             }else {
                 //aqui va el codigo que crea el usuario 
-                const cartData = await this.cartService.createCart([{pid:"",quantity:0}])
+                console.log(cartService)
+                const cartData = await cartService.createCart()
+                console.log(cartData)
                 let response
                 if (cartData.data !== undefined && typeof cartData.data ==="object"&& cartData.data !== null && "_id" in cartData.data) {
-                 response = await this.passportService.createUser({...req.body,password:await argon.hash(password),cartId:cartData.data._id})
+                 response = await passportService.createUser({...req.body,password:await argon.hash(password),cartId:cartData.data._id})
                 }
-                if(response !== undefined && response.ok){
-                    if (typeof response.data === "object" && response.data !==null&& "_id" in response.data)
+                if(response !== undefined && response !==null){
+                    if (typeof response === "object" && response !==null&& "_id" in response)
                     {
-                        return done(null,response.data)
-                    }else return done(response.error,null)
+                        return done(null,response)
+                    }else return done(new Error("Imposible crear el usuario"),null)
                 }
             }
         }catch(e){
@@ -57,22 +60,22 @@ return done(e,null)
         done(null,user._id)
     }
     async deSerialize(userId:string,done:DoneCallback){
-        const data= await passportAuthService.findUserById(userId)
+        const data= await passportService.findById(userId)
         console.log(data,"serialize data")
-        if (data.ok && data.data !== null){
-            console.log("deserialize",data.data)
-            done (null,data.data)
-        }else done(data.error,null)
+        if (data !== undefined && data !== null){
+            console.log("deserialize",data)
+            done (null,data)
+        }else done(new Error("Error al recuperar usuario"),null)
     }
     async gitHubLogin(accesstoken:string,refreshtoken:string,profile:any,cb:DoneCallback){
         try{
  
             if (profile !== null &&typeof profile =="object" && "_json" in profile && "email" in profile._json) {
                 const username = profile["_json"].email as string
-                const data = await passportAuthService.findByUserName(username.toLowerCase())
+                const data = await passportService.findByEmail(username.toLowerCase())
                 console.log(data,username)
-                if (data.ok){
-                    const response = data.data
+                if (data !== undefined && data!== null){
+                    const response = data
                     if (response !== null && typeof response ==="object" && "_id" in response){
                         return cb(null,response)
 

@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { AuthService } from "./no sirve";
-import { zodCreateUserType, zodUserType } from './auth.schemas';
+import { zodCreateUserType } from './auth.schemas';
 export class AuthController{
     constructor(){}
    

@@ -12,7 +12,7 @@ const pm  = new TypegooseDAO<CartSchema>(CartSchema,'carts')
 export class CartService<T extends Product>  {
     constructor(
         protected dao = pm ,//productManager,
-        public createCart = async (products: T[]) => {
+        public createCart = async (products?: T[]) => {
           //  const cartObject = new Cart(products)
             try {
                 const response = await this.dao.addProduct({products})

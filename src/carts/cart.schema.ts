@@ -14,7 +14,7 @@ quantity!:number
 }
 @modelOptions({options: {allowMixed:0}})
 export class CartSchema {
-    @prop()
+    @prop({required:false})
     public products?:Product[]
 
 }
