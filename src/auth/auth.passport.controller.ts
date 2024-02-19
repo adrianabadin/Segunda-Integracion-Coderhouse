@@ -5,7 +5,7 @@ import { DoneCallback } from "passport"
 import passport from 'passport';
 import { zodCreateUserType } from "./auth.schemas";
 import { CartService } from "../carts/cart.service";
-import { UserDontExist } from "./auth.errors";
+import { DeserializeError, UserCreateError, UserDontExist, WrongPassword } from "./auth.errors";
 const passportService = new PassportService()
 const cartService= new CartService()
 export class PassportController {
@@ -22,9 +22,9 @@ try{
             if (response !== null&& typeof response ==="object" && "password" in response){
                 if (await argon.verify(response.password,password)){
                     return done(null,response)
-                }else throw new Error ("Wrong Password")
-            }else throw new Error("User not found")
-        }else throw new Error("User not found!")
+                }else throw new WrongPassword()
+            }else throw new UserDontExist()
+        }else throw new UserDontExist()
 }catch(e){
     console.log(e)
     return done(e,null)
@@ -51,7 +51,7 @@ try{
                     if (typeof response === "object" && response !==null&& "_id" in response)
                     {
                         return done(null,response)
-                    }else return done(new Error("Imposible crear el usuario"),null)
+                    }else return done(new UserCreateError(),null)
                 }
             }
         }catch(e){
@@ -68,7 +68,7 @@ return done(e,null)
         if (data !== undefined && data !== null){
 
             done (null,data)
-        }else done(new Error("Error al recuperar usuario"),null)
+        }else done(new DeserializeError(),null)
     }
     async gitHubLogin(accesstoken:string,refreshtoken:string,profile:any,cb:DoneCallback){
         try{
@@ -83,10 +83,10 @@ return done(e,null)
                         return cb(null,response)
 
                     } else{
-                        throw new Error("User not found!")
+                        throw new UserDontExist()
                     }
-                }else throw new Error("User not found!")
-            }else throw new Error("User not Found!")
+                }else throw new UserDontExist()
+            }else throw new UserDontExist()
             
 
         }catch(e){
