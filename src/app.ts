@@ -2,6 +2,7 @@ import { cartRouter } from "./carts/cart.routes";
 import { productRoute } from "./products/products.routes";
 import { engine } from "express-handlebars";
 import path = require("path");
+import cookieParser from "cookie-parser"
 import express, { Request, Response } from "express";
 import { AppController } from "./app.controller";
 import { appRoutes } from "./app.routes";
@@ -12,6 +13,7 @@ import MongoDBStore from "connect-mongodb-session"
 import { authRouter } from "./auth/auth.routes";
 import "./auth/auth.passport.local"
 import "./auth/auth.passport.gh"
+import "./auth/auth.passport.jwt"
 import {z} from "zod"
 import passport = require("passport");
 declare module 'express-session' {
@@ -55,6 +57,7 @@ const PORT = 8080;
 app.use(session)
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser())
 app.use(passport.initialize())
 app.use(passport.session())
 app.use(appRoutes);

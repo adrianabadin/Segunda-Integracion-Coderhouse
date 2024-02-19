@@ -5,12 +5,16 @@ import { DoneCallback } from "passport"
 import passport from 'passport';
 import { zodCreateUserType } from "./auth.schemas";
 import { CartService } from "../carts/cart.service";
+import { UserDontExist } from "./auth.errors";
 const passportService = new PassportService()
 const cartService= new CartService()
 export class PassportController {
     constructor (
-        protected passportServicedb= passportService    ){}
-    async localLogin(req:Request,email:string,password:string,done:(error:any,data:any,...args:any)=>any){
+        protected passportServicedb= passportService    ){
+            this.jwtLoginVerify=this.jwtLoginVerify.bind(this)
+        }
+
+        async localLogin(req:Request,email:string,password:string,done:(error:any,data:any,...args:any)=>any){
 try{
         const data = await passportService.findByEmail(email)
         if (data !==undefined){
@@ -28,6 +32,7 @@ try{
     }
     async localSignUp(req:Request<any,any,zodCreateUserType["body"]>,email:string,password:string,done:(error:any,data:any,...args:any)=>any){
         try{
+            console.log(email)
             const data =await passportService.findByEmail(email)
             // si el usuario fue encontrado entonces retorna user exist error
             if (data !== null){
@@ -35,11 +40,11 @@ try{
                     return done(new Error("User Alrready exists"),null)
             }else {
                 //aqui va el codigo que crea el usuario 
-                console.log(cartService)
                 const cartData = await cartService.createCart()
-                console.log(cartData)
+                
                 let response
                 if (cartData.data !== undefined && typeof cartData.data ==="object"&& cartData.data !== null && "_id" in cartData.data) {
+                    
                  response = await passportService.createUser({...req.body,password:await argon.hash(password),cartId:cartData.data._id})
                 }
                 if(response !== undefined && response !==null){
@@ -56,14 +61,12 @@ return done(e,null)
         }
     }
     async serialize(user:any,done:DoneCallback){
-        console.log("serialize", user)
         done(null,user._id)
     }
     async deSerialize(userId:string,done:DoneCallback){
         const data= await passportService.findById(userId)
-        console.log(data,"serialize data")
         if (data !== undefined && data !== null){
-            console.log("deserialize",data)
+
             done (null,data)
         }else done(new Error("Error al recuperar usuario"),null)
     }
@@ -90,6 +93,19 @@ return done(e,null)
             console.log(e)
             return cb(e,null)
 
+        }
+
+    }
+    async jwtLoginVerify(req: Request, jwtPayload: {id:string}, done: (...args:any)=>void) {
+        try{
+            
+            const user =await this.passportServicedb.findById(jwtPayload.id)
+              if (user !==null){    
+                done(null,user)}
+                   else throw new UserDontExist() 
+        }catch(error){
+            console.log(error)
+            done(error,null)
         }
     }
 }
