@@ -44,7 +44,6 @@ this.validateRol=this.validateRol.bind(this)
         if ("_id" in req.user)
             {
                 const {_id:id}=req.user
-             
                 console.log(id,passportService,"empty")
                 const response = await  this.service.signJWT(`${id}`)
                 res.clearCookie("jwt")

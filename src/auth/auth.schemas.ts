@@ -44,8 +44,8 @@ export const  zodCreateUser = z.object({
         password2:z.string({invalid_type_error:"Password should be a string"}).nonempty("Must provide a password"),
         first_name:z.string().min(3,{message:"First name must have at least 3 letters"}),
         last_name:z.string().min(3,{message:"Last name must have at least 3 letters"}),
-        age:z.number(),
-        cartId:z.any()
+        age:z.string(),
+        cartId:z.any().optional()
 }).refine(data=>data.password===data.password2,"Passwords must be Equal")
 })
 
